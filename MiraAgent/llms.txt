@@ -1,0 +1,46 @@
+# Mira Agent Core
+
+> 轻量级 Java 8 AI Agent 内核与编排运行时
+
+## 指南
+
+- [内核适用场景](/MiraAgent/guide/start/introduction.md)
+- [整体结构](/MiraAgent/guide/start/architecture.md): 组件分层、调用方向与一次对话涉及的 ID 标识
+- [跑通第一次对话](/MiraAgent/guide/start/getting-started.md): 本篇介绍如何从零跑通第一次对话，只要一个 main 方法。
+- [内核运行时装配](/MiraAgent/guide/runtime/kernel-runtime.md): 本文描述应用启动时装配内核的方式，以及装配后的使用与释放。
+- [一个进程里跑多套运行时](/MiraAgent/guide/runtime/multi-instance.md): 同一个 JVM 内可运行多套运行时，各用各自的模型、工具与文件，互不干扰。
+- [基础对话](/MiraAgent/guide/agent/basic-chat.md): 本篇介绍如何用几十行代码把内核跑起来，实现一问一答，并且追问时能延续上一轮的内容。
+- [流式输出](/MiraAgent/guide/agent/streaming.md): 流式输出让用户看到逐字生成的正文，并呈现"正在思考""正在调用工具"等状态。
+- [工具调用](/MiraAgent/guide/agent/tool-calling.md): 内核将模型发出的工具调用请求转换为实际执行（读文件、改文件、运行命令），并通过白名单控制可用工具。
+- [内置工具一览](/MiraAgent/guide/agent/builtin-tools.md): 内核自带工具按用途分四组。Bash 的安全限制单独说明。
+- [自定义工具](/MiraAgent/guide/agent/custom-tools.md): 给普通 Java 方法加注解即可将其变为 AI 可调用工具。以下以"查订单"为例走完流程，并说明一处易混淆点：工具注册是全局的，白名单是每次对话的。
+- [子代理（SubAgent）](/MiraAgent/guide/agent/sub-agent.md): 子代理用于把复杂子任务外包给独立上下文执行，仅将结论带回主对话，中间的搜索过程不进入主对话历史。
+- [并发执行与 ThreadLocal](/MiraAgent/guide/agent/concurrency.md): 内核的对话运行在线程池中。自行开启线程时涉及线程池选用，以及 ThreadLocal 跨线程丢失的问题。
+- [停止与续跑](/MiraAgent/guide/agent/stop-resume.md): 用户点击停止时，内核停止生成；停止后历史保留，可从断点继续。
+- [工具执行前钩子（EventHook）](/MiraAgent/guide/agent/event-hook.md): EventHook 在工具真正执行前提供一次决策机会：放行、由调用方代答、或挂起等待外部结果。
+- [长对话压缩（ContextCompactor）](/MiraAgent/guide/agent/compaction.md): 对话轮数增多后，历史变长、token 开销上升。内核将较早的对话折叠为一段摘要，仅保留最近内容。
+- [会话附件（VFS）](/MiraAgent/guide/data/vfs.md): 会话附件将用户上传的文件抽取为纯文本后存储，AI 可在本次会话内读取、搜索。 内核只提出了一种附件的简易存储方案，构建了一个小型虚拟”文件系统“充当”知识库“，不涉及把上传的文件变成文本。文本转换通常借助视觉模型、光学字符识别（OCR）、MinerU、Docling等框架辅助实现。
+- [工作空间（Workspace）](/MiraAgent/guide/data/workspace.md): 工作空间将 AI 的读文件、改文件、跑命令约束在指定的一个真实项目目录内。
+- [消息持久化](/MiraAgent/guide/data/persistence.md): 本篇说明如何将会话的历史消息与过程事件持久化，以实现会话列表、历史记录，以及刷新页面后仍能恢复答案。
+- [配置中心](/MiraAgent/guide/config/config-center.md): 配置快照（内核中称为 declaration）描述一个系统包含的内容：有哪些模型、向量模型、可用工具、系统提示词以及默认值。下文说明其包含的若干块、修改方式，以及修改后需要"应用"一次才生效的原因。
+- [接入一个模型](/MiraAgent/guide/config/models.md): 接入 DeepSeek、OpenAI 或自行部署的本地服务（如 vLLM），本质都是往配置快照的 models 里增加一条记录：向内核声明该别名对应的地址、模型名与密钥。下文逐字段说明，并重点说明哪些参数设置后才会发出、哪些设为 null 则完全不发出。
+- [接入向量模型](/MiraAgent/guide/config/embedding.md): 做语义检索、知识库召回，第一步是把文本变成一串数字（向量），再用这串数字算相似度。内核提供向量化能力与一张注册表：接入向量模型后，可按别名取得任意文本的向量。本节说明接入、查询的方式，以及自行计算相似度的方法。
+- [配置导出与导入](/MiraAgent/guide/config/export-import.md): 在开发机配好模型、工具、提示词后，可导出为一份 JSON 文件；在无界面服务器或另一环境中读回即可运行。本节说明导出时密钥的处理方式、导入时校验报告的读取方式，以及只导入部分配置的方法。
+- [插件配置项](/MiraAgent/guide/config/plugin-settings.md): 编排任务里每个节点插件都有一组运行开关，例如超时时长、是否开启思考、使用哪套话术。这些值不写死在插件代码里，而通过配置快照的 plugins 块承载。配置快照的 plugins 块承载每个插件的一组设置；本节说明其结构及插件端的读取接口。
+- [技能包（Skills）](/MiraAgent/guide/extensions/skills.md): 一份"操作手册"可打包为技能，AI 在需要时自行读取，避免将手册全文放入系统提示词。
+- [接入 MCP 工具服务](/MiraAgent/guide/extensions/mcp.md): 已有的 MCP 服务接入内核后，AI 可调用其提供的工具，无需自行编写工具代码。
+- [HTTP 工具](/MiraAgent/guide/extensions/http-tools.md): 已有的 REST 接口通过一份"接口说明"即可变为 AI 可调用工具，无需为每个接口编写工具类。
+- [图片输入](/MiraAgent/guide/extensions/multimodal.md): 图片作为对话消息的一部分发送给模型，模型在回答中描述图片内容。
+
+## 参考
+
+- [上层应用接入清单](/MiraAgent/reference/checklist.md): 按顺序排列的待办清单，逐项完成后形成应用骨架。
+- [内核工具类](/MiraAgent/reference/utilities.md): 内核自带的一批小工具类，按用途分组说明。
+- [编排：让 AI 按流程跑](/MiraAgent/reference/orchestration/overview.md): 除了一问一答，也常需要把多个 AI 步骤按流程串联。本篇说明流程由哪三块拼成、内核提供哪些拼装件，以及哪一部分需由调用方编写。
+- [调用参数：这一次怎么跑](/MiraAgent/reference/orchestration/invocation.md): 配置快照回答"系统有什么"，调用参数回答"这一次怎么跑"：问什么、带不带图片、用哪个模型、挂哪个会话。它是一次性的，用完即弃。下文说明其各字段含义、不能写入配置文件的原因，以及它与执行现场（AgentContextHolder）的关系。
+- [节点配置：这个节点需要什么](/MiraAgent/reference/orchestration/node-blueprint.md): 流程定义里的一个节点，写的是"该节点有哪些数据"：模型 id 叫 model_id、工具包叫 toolkits。可内核不认识这些长得各不相同的键名，它只认"需要一个模型别名""需要几个工具包"。把节点数据翻译成内核能理解的需求清单，用的就是 NodeBlueprint（节点配置声明）。
+- [执行前先校验](/MiraAgent/reference/orchestration/execution-resolver.md): 流程配错了一个模型名，不希望跑到一半才出错。ExecutionResolver 就是那个"执行前的检查站"：把节点的需求（NodeBlueprint）和这一次的供给（Invocation）对一遍，说明模型在不在、工具包能不能解析、必需参数齐不齐，并给出可以直接拿去执行的模型别名和工具白名单。
+
+## Others
+
+- [总览](/MiraAgent/guide/index.md): Mira Agent Core 是一个纯 Java、最小化依赖的循环模式智能体内核，可嵌入现有 Java 应用，负责大模型对话、工具调用、会话文件读写与历史消息管理，不依赖 Spring 或其他框架。
